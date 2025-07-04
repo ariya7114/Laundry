@@ -3,6 +3,8 @@
 /public/build
 /public/hot
 /public/storage
+/public_html/storage
+/public_html/hot
 /storage/*.key
 /storage/pail
 /vendor
@@ -16,8 +18,16 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+
+# IDE/editor-specific
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
+
+/.vagrant
