@@ -11,7 +11,6 @@ use App\Http\Controllers\KasirTransaksiController;
 use App\Http\Middleware\Ensure2FAIsVerified;
 use App\Http\Controllers\PelangganTransaksiController;
 
-
 /**
  * ================================
  * HALAMAN AWAL
@@ -43,44 +42,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /**
  * ================================
- * DASHBOARD BERDASARKAN ROLE
+ * REDIRECT OTOMATIS SETELAH LOGIN
+ * ================================
+ */
+Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
+    $user = auth()->user();
+
+    if (!$user) return redirect()->route('login');
+
+    if ($user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    } elseif ($user->hasRole('pemilik')) {
+        return redirect()->route('pemilik.dashboard');
+    } elseif ($user->hasRole('kasir')) {
+        return redirect()->route('kasir.dashboard');
+    } elseif ($user->hasRole('pelanggan')) {
+        return redirect()->route('pelanggan.dashboard');
+    } else {
+        abort(403, 'Role tidak dikenali');
+    }
+})->name('dashboard');
+
+/**
+ * ================================
+ * DASHBOARD ADMIN, PEMILIK, KASIR (WAJIB 2FA)
  * ================================
  */
 Route::middleware(['auth', 'verified', Ensure2FAIsVerified::class])->group(function () {
 
-    // Redirect otomatis sesuai role
-    Route::get('/dashboard', function () {
-        $user = auth()->user();
-
-        if (!$user) return redirect()->route('login');
-
-        if ($user->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->hasRole('pemilik')) {
-            return redirect()->route('pemilik.dashboard');
-        } elseif ($user->hasRole('kasir')) {
-            return redirect()->route('kasir.dashboard');
-        } elseif ($user->hasRole('pelanggan')) {
-            return redirect()->route('pelanggan.dashboard');
-        } else {
-            abort(403, 'Role tidak dikenali');
-        }
-    })->name('dashboard');
-
-    // =======================
     // Admin
-    // =======================
     Route::get('/dashboard/admin', [AdminController::class, 'index'])->name('admin.dashboard');
 
-    // =======================
     // Pemilik
-    // =======================
     Route::get('/dashboard/pemilik', [PemilikController::class, 'index'])->name('pemilik.dashboard');
     Route::get('/dashboard/pemilik/pendapatan', [PemilikController::class, 'pendapatan'])->name('pemilik.pendapatan');
 
-    // =======================
     // Kasir
-    // =======================
     Route::prefix('dashboard/kasir')->name('kasir.')->group(function () {
         Route::get('/', [KasirController::class, 'index'])->name('dashboard');
 
@@ -96,13 +93,15 @@ Route::middleware(['auth', 'verified', Ensure2FAIsVerified::class])->group(funct
         Route::post('/transaksi/simpan', [KasirController::class, 'simpanTransaksi'])->name('transaksi.simpan');
         Route::delete('/transaksi/{id}', [KasirController::class, 'hapusTransaksi'])->name('transaksi.hapus');
     });
+});
 
-    // =======================
-    // Pelanggan
-    // =======================
+/**
+ * ================================
+ * DASHBOARD PELANGGAN (TANPA 2FA)
+ * ================================
+ */
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/pelanggan', [PelangganController::class, 'index'])->name('pelanggan.dashboard');
-
-    // Fitur Tambahan Pelanggan
     Route::get('/dashboard/pelanggan/status-cucian', [PelangganTransaksiController::class, 'status'])->name('pelanggan.status');
     Route::get('/dashboard/pelanggan/riwayat-transaksi', [PelangganTransaksiController::class, 'riwayat'])->name('pelanggan.riwayat');
 });

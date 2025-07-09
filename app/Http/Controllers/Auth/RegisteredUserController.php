@@ -44,6 +44,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        if (in_array($validated['role'], ['admin', 'pemilik', 'kasir'])) {
         return redirect()->route('2fa.setup');
+        }
+
+        return redirect()->route('pelanggan.dashboard');
     }
 }
